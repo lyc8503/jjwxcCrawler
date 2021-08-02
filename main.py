@@ -95,7 +95,7 @@ if jj_account != "":
 novel_id = input("请输入小说 ID: ")
 
 # 获取小说信息
-basic_info = requests.get("https://app-cdn.jjwxc.net/androidapi/novelbasicinfo?novelId=3193259", params={
+basic_info = requests.get("https://app-cdn.jjwxc.net/androidapi/novelbasicinfo", params={
     "novelId": novel_id
 }, headers=headers).json()
 
