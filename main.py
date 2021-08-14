@@ -60,7 +60,7 @@ def des_encrypt(s, token=""):
 
 
 def write_file(s, end="\n"):
-    with open("output.txt", "a+") as f:
+    with open("output.txt", "a+", encoding="utf-8") as f:
         f.write(s + end)
 
 
@@ -155,9 +155,16 @@ for i in range(1, int(basic_info['vipChapterid'])):
                    chapter_info['chapterlist'][i - 1]['chapterintro'])
         write_file("")
 
+        # 处理被锁章节
+        if chapter_info['chapterlist'][i - 1]['islock'] != '0':
+            logging.warning("章节被锁.")
+            write_file("章节被锁!")
+            write_file("")
+            continue
+
         logging.info("获取章节: " + str(i))
         content = get_free_chapter(novel_id, i)
-        logging.info(content)
+        logging.debug(content)
 
         if "content" in content:
             write_file(html2text(html2text(content['content'])))
@@ -173,6 +180,8 @@ for i in range(1, int(basic_info['vipChapterid'])):
         time.sleep(1)
     except Exception as e:
         write_file("内容获取失败: " + str(e))
+        logging.exception(e)
+
 
 if not login_status:
     logging.warning("未登录, 无法获取V章, 程序结束.")
@@ -194,14 +203,22 @@ for i in range(int(basic_info['vipChapterid']), int(basic_info['maxChapterId']) 
             'chapterintro'])
         write_file("")
 
+        # 处理被锁章节
+        if chapter_info['chapterlist'][i - 1]['islock'] != '0':
+            logging.warning("章节被锁.")
+            write_file("章节被锁!")
+            write_file("")
+            continue
+
         logging.info("获取章节: " + str(i))
         content = get_vip_chapter(novel_id, i, user_token)
-        logging.info(content)
+        logging.debug(content)
 
         if "content" in content:
             if "content" in content['encryptField']:
                 content['content'] = des_decrypt(content['content'], token=user_token)
-                logging.info("解密成功: " + content['content'])
+                logging.info("解密成功.")
+                logging.debug(content['content'])
 
             write_file(html2text(html2text(content['content'])))
             if content['sayBody'] != "":
@@ -216,5 +233,6 @@ for i in range(int(basic_info['vipChapterid']), int(basic_info['maxChapterId']) 
         time.sleep(1)
     except Exception as e:
         write_file("内容获取失败: " + str(e))
+        logging.exception(e)
 
 logging.info("完成.")
