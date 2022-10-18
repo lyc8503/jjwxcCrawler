@@ -64,32 +64,33 @@ def write_file(s, end="\n"):
         f.write(s + end)
 
 
-jj_account = input("请输入晋江账号(可留空, 不登陆仅可获取免费章节): ")
-jj_password = ""
-login_status = False
-user_token = ""
+# jj_account = input("请输入晋江账号(可留空, 不登陆仅可获取免费章节): ")
+# jj_password = ""
 
-if jj_account != "":
-    jj_password = input("请输入晋江密码: ")
+user_token = input("输入用户 token(手机端抓包获得, 可留空, 不登陆仅可获取免费章节): ")
+login_status = len(user_token) > 2
 
-    identifiers = ''.join(random.choice("0123456789") for _ in range(18)) + ":null:null"
-
-    login_info = requests.get("https://app.jjwxc.org/androidapi/login", params={
-        "versionCode": 206,
-        "loginName": jj_account,
-        "encode": 1,
-        "loginPassword": des_encrypt(jj_password),
-        "sign": des_encrypt(identifiers),
-        "brand": "Lenovo",
-        "model": "Lenovo",
-        "identifiers": identifiers
-    }, headers=headers).json()
-    if "readerId" in login_info and "token" in login_info:
-        logging.info("账号登录成功: " + str(login_info["readerId"]))
-        login_status = True
-        user_token = login_info['token']
-    else:
-        logging.warning("账号登录失败: " + str(login_info))
+# if jj_account != "":
+#     jj_password = input("请输入晋江密码: ")
+#
+#     identifiers = ''.join(random.choice("0123456789") for _ in range(18)) + ":null:null"
+#
+#     login_info = requests.get("https://app.jjwxc.org/androidapi/login", params={
+#         "versionCode": 206,
+#         "loginName": jj_account,
+#         "encode": 1,
+#         "loginPassword": des_encrypt(jj_password),
+#         "sign": des_encrypt(identifiers),
+#         "brand": "Lenovo",
+#         "model": "Lenovo",
+#         "identifiers": identifiers
+#     }, headers=headers).json()
+#     if "readerId" in login_info and "token" in login_info:
+#         logging.info("账号登录成功: " + str(login_info["readerId"]))
+#         login_status = True
+#         user_token = login_info['token']
+#     else:
+#         logging.warning("账号登录失败: " + str(login_info))
 
 
 novel_id = input("请输入小说 ID: ")
