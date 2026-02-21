@@ -1,16 +1,12 @@
 # 晋江文学城 爬虫
-# 使用安卓 App 的 Api
-# Api 接口通过抓包和逆向获得
+# 使用安卓 App 的 Api, 仅可以获取免费章节
 
 
 import logging
 import requests
-import sys
-from pyDes import des, CBC, PAD_PKCS5
-from base64 import b64encode, b64decode
+import json
 from tenacity import retry, stop_after_attempt, wait_fixed
 import time
-import random
 from html2text import html2text
 
 
@@ -33,64 +29,18 @@ def get_free_chapter(target_novel_id, target_chapter_id):
     return r.json()
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
-def get_vip_chapter(target_novel_id, target_chapter_id, token):
-    r = requests.get("https://app.jjwxc.org/androidapi/chapterContent", params={
-        "novelId": target_novel_id,
-        "chapterId": target_chapter_id,
-        "token": token,
-        "versionCode": 206,
-        "readState": "readahead"
-    }, headers=headers)
-    return r.json()
-
-
-# DES 加解密通过反编译获取密钥
-def des_decrypt(s, token=""):
-    en = des("00000000", CBC, "1ae2c94b", pad=None, padmode=PAD_PKCS5)
-    # 登陆后的加解密密钥需要加上 token, 登陆前不需要
-    en.setKey("KK!%G3JdCHJxpAF3%Vg9pN" + token)
-    return en.decrypt(b64decode(s)).decode("utf-8")
-
-
-def des_encrypt(s, token=""):
-    en = des("00000000", CBC, "1ae2c94b", pad=None, padmode=PAD_PKCS5)
-    en.setKey("KK!%G3JdCHJxpAF3%Vg9pN" + token)
-    return b64encode(en.encrypt(s)).decode("utf-8")
+def get_vip_chapter(target_novel_id, target_chapter_id, target_chapter_name):
+    try:
+        with open(f"temp/{target_chapter_id}_{target_chapter_name}.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logging.warning(f"章节 {target_chapter_id} 获取失败: {e}")
+        return {}
 
 
 def write_file(s, end="\n"):
     with open("output.txt", "a+", encoding="utf-8") as f:
         f.write(s + end)
-
-
-# jj_account = input("请输入晋江账号(可留空, 不登陆仅可获取免费章节): ")
-# jj_password = ""
-
-user_token = input("输入用户 token(手机端抓包获得, 可留空, 不登陆仅可获取免费章节): ")
-login_status = len(user_token) > 2
-
-# if jj_account != "":
-#     jj_password = input("请输入晋江密码: ")
-#
-#     identifiers = ''.join(random.choice("0123456789") for _ in range(18)) + ":null:null"
-#
-#     login_info = requests.get("https://app.jjwxc.org/androidapi/login", params={
-#         "versionCode": 206,
-#         "loginName": jj_account,
-#         "encode": 1,
-#         "loginPassword": des_encrypt(jj_password),
-#         "sign": des_encrypt(identifiers),
-#         "brand": "Lenovo",
-#         "model": "Lenovo",
-#         "identifiers": identifiers
-#     }, headers=headers).json()
-#     if "readerId" in login_info and "token" in login_info:
-#         logging.info("账号登录成功: " + str(login_info["readerId"]))
-#         login_status = True
-#         user_token = login_info['token']
-#     else:
-#         logging.warning("账号登录失败: " + str(login_info))
 
 
 novel_id = input("请输入小说 ID: ")
@@ -178,15 +128,11 @@ for i in range(1, int(basic_info['vipChapterid'])):
             write_file("章节内容获取失败!")
             logging.warning("章节获取失败!")
 
-        time.sleep(1)
+        time.sleep(0.7)
     except Exception as e:
         write_file("内容获取失败: " + str(e))
         logging.exception(e)
 
-
-if not login_status:
-    logging.warning("未登录, 无法获取V章, 程序结束.")
-    sys.exit(0)
 
 logging.info("尝试获取V章...")
 
@@ -212,15 +158,10 @@ for i in range(int(basic_info['vipChapterid']), int(basic_info['maxChapterId']) 
             continue
 
         logging.info("获取章节: " + str(i))
-        content = get_vip_chapter(novel_id, i, user_token)
+        content = get_vip_chapter(novel_id, i, chapter_info['chapterlist'][i - 1]['chaptername'])
         logging.debug(content)
 
         if "content" in content:
-            if "content" in content['encryptField']:
-                content['content'] = des_decrypt(content['content'], token=user_token)
-                logging.info("解密成功.")
-                logging.debug(content['content'])
-
             write_file(html2text(html2text(content['content'])))
             if content['sayBody'] != "":
                 write_file("作者有话说:")
@@ -229,11 +170,12 @@ for i in range(int(basic_info['vipChapterid']), int(basic_info['maxChapterId']) 
 
             logging.info("章节获取成功.")
         else:
+            write_file("章节获取失败: V章")
             logging.warning("章节获取失败!")
 
-        time.sleep(1)
+        # time.sleep(1)
     except Exception as e:
-        write_file("内容获取失败: " + str(e))
+        write_file("章节获取失败: " + str(e))
         logging.exception(e)
 
 logging.info("完成.")
