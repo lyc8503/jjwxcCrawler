@@ -128,7 +128,7 @@ for i in range(1, int(basic_info['vipChapterid'])):
             write_file("章节内容获取失败!")
             logging.warning("章节获取失败!")
 
-        time.sleep(0.7)
+        time.sleep(0.25)
     except Exception as e:
         write_file("内容获取失败: " + str(e))
         logging.exception(e)
