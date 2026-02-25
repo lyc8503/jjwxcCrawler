@@ -31,7 +31,7 @@ def get_free_chapter(target_novel_id, target_chapter_id):
 
 def get_vip_chapter(target_novel_id, target_chapter_id, target_chapter_name):
     try:
-        with open(f"temp/{target_chapter_id}_{target_chapter_name}.json", "r", encoding="utf-8") as f:
+        with open(f"temp/{target_chapter_id}_{target_chapter_name.replace('/', '_')}.json", "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
         logging.warning(f"章节 {target_chapter_id} 获取失败: {e}")

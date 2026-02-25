@@ -24,7 +24,7 @@ for rec in records:
     json_data = json.loads(rec['record'])['values']
     if 'chapterId' not in json_data:
         continue
-    key = json_data['chapterId'] + "_" + json_data['chapterName']
+    key = json_data['chapterId'] + "_" + json_data['chapterName'].replace("/", "_")
     if key not in buf or len(json_data['content']) > len(buf[key]['content']):
         buf[key] = json_data
 
